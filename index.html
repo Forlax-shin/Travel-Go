@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GO!TRAVEL - Premium Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root { --primary-color: #FF5733; --text-dark: #2D3436; }
+        body { font-family: 'Fredoka', sans-serif; overflow-x: hidden; color: var(--text-dark); background-color: #f8fafc; }
+        .bg-primary { background-color: var(--primary-color); }
+        .text-primary { color: var(--primary-color); }
+
+        .hero-section {
+            background: linear-gradient(135deg, #fff1eb 0%, #ace0f9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        /* ANIMASI PESAWAT */
+        @keyframes planeLanding {
+            0% { transform: translate(-20vw, -10vh) rotate(15deg) scale(1.5); opacity: 0; }
+            10% { opacity: 1; }
+            80% { transform: translate(42vw, 25vh) rotate(5deg) scale(0.6); }
+            100% { transform: translate(45vw, 30vh) rotate(0deg) scale(0.5); opacity: 1; }
+        }
+        .plane-anim { 
+            animation: planeLanding 7s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            position: absolute; z-index: 30; color: var(--primary-color);
+            top: 10%; left: 0; pointer-events: none;
+        }
+
+        /* ANIMASI TEKS */
+        .char { display: inline-block; transition: transform 0.4s ease, color 0.6s ease; }
+        .active-char { color: inherit; } /* Biarkan warna mengikuti parent div */
+        .line2 .active-char { color: var(--primary-color) !important; }
+        .push-effect { transform: translateY(-20px) scale(1.1); }
+
+        @keyframes islandFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        .island-float { animation: islandFloat 4s ease-in-out infinite; }
+
+        #cart-sidebar { transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(100%); }
+        #cart-sidebar.open { transform: translateX(0); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        .star-rating { direction: rtl; display: inline-flex; }
+        .star-rating input { display: none; }
+        .star-rating label { color: #cbd5e1; cursor: pointer; font-size: 1.5rem; transition: color 0.2s; }
+        .star-rating input:checked ~ label,
+        .star-rating label:hover,
+        .star-rating label:hover ~ label { color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+    <nav class="fixed w-full z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-full px-8 py-3 flex justify-between items-center shadow-lg border border-white/50">
+            <a href="index.html" class="flex items-center gap-2 font-bold text-xl uppercase tracking-tighter">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"><i data-lucide="palmtree" class="w-5 h-5"></i></div>
+                <span>GO!<span class="text-primary">TRAVEL</span></span>
+            </a>
+            <div class="hidden md:flex gap-10 font-semibold text-slate-600 text-sm">
+                <a href="index.html" class="text-primary">Beranda</a>
+                <a href="katalog.html" class="hover:text-primary transition">Paket Tour</a>
+                <a href="gallery.html" class="hover:text-primary transition">Gallery</a>
+                <a href="tim.html" class="hover:text-primary transition">Tim Kami</a>
+                <a href="blog.html" class="hover:text-primary transition">Blog</a> 
+                <a href="admin.html" class="hover:text-primary transition flex items-center gap-1"><i data-lucide="user-cog" class="w-4 h-4"></i> Admin</a>
+            </div>
+            <button onclick="toggleCart()" class="relative w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition">
+                <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <section class="hero-section px-6 overflow-hidden">
+        <div class="plane-anim"><i data-lucide="plane" class="w-24 h-24 fill-current rotate-90"></i></div>
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center w-full relative z-10 text-left">
+            <div>
+                <div class="inline-flex items-center gap-2 bg-white/50 text-primary px-4 py-2 rounded-full text-sm font-bold mb-6 backdrop-blur-sm">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                    <span>Eksplorasi Tanpa Batas</span>
+                </div>
+                
+                <h1 id="bouncing-text" class="text-5xl md:text-7xl lg:text-8xl font-bold mb-8 leading-[1.1] tracking-tighter">
+                    <div class="line1">Liburan Seru</div>
+                    <div class="line2 text-primary italic">Jadi Nyata.</div>
+                </h1>
+
+                <p class="text-lg text-slate-600 mb-10 leading-relaxed max-w-lg">Pilih destinasi impianmu dan biarkan kami yang mengurus sisanya.</p>
+                <div class="flex">
+                    <a href="katalog.html" class="bg-slate-900 text-white px-10 py-5 rounded-[2rem] font-bold hover:bg-primary transition-all shadow-xl inline-flex items-center gap-2 group">
+                        Cek Katalog <i data-lucide="arrow-right" class="w-5 h-5 group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="relative flex justify-center items-center island-float">
+                <img src="https://i.imgur.com/VLLJ4Xw.png" class="relative z-10 w-full max-w-[550px]" alt="Island">
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 px-6 bg-white text-left">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+            <div class="relative">
+                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=800&q=80" class="rounded-[3rem] shadow-2xl border-8 border-slate-50 relative z-10">
+                <div class="absolute -bottom-6 -right-6 w-32 h-32 bg-orange-100 rounded-full blur-2xl opacity-60"></div>
+            </div>
+            <div>
+                <p class="text-primary font-bold uppercase text-sm mb-4 tracking-widest italic">// About GoTravel</p>
+                <h2 class="text-5xl font-bold mb-6 tracking-tighter">Sahabat Perjalanan <br><span class="text-slate-300">Terbaik Anda.</span></h2>
+                <p class="text-slate-500 text-lg leading-relaxed mb-8">
+                    Kami hadir untuk memberikan pengalaman liburan premium yang tak terlupakan. Dengan rute yang dikurasi khusus dan pelayanan profesional.
+                </p>
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-slate-50 p-6 rounded-[2rem]"><h4 class="text-3xl font-bold text-primary mb-1">10k+</h4><p class="text-[10px] font-bold uppercase text-slate-400">Happy Travelers</p></div>
+                    <div class="bg-slate-50 p-6 rounded-[2rem]"><h4 class="text-3xl font-bold text-primary mb-1">50+</h4><p class="text-[10px] font-bold uppercase text-slate-400">Destinations</p></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 px-6 max-w-7xl mx-auto text-left">
+        <h2 class="text-4xl font-bold mb-12">Paket <span class="text-primary italic">Terpopuler</span></h2>
+        <div id="best-seller-grid" class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="col-span-full flex justify-center py-20">
+                <div class="animate-spin w-8 h-8 border-4 border-slate-200 border-t-primary rounded-full"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-24 px-6 bg-slate-50">
+        <div class="max-w-7xl mx-auto text-left">
+            <h2 class="text-4xl font-bold mb-16 tracking-tighter text-center">Cerita <span class="text-primary italic">Pejalan</span></h2>
+            <div class="grid md:grid-cols-3 gap-12">
+                <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 h-fit">
+                    <h3 class="text-xl font-bold mb-6">Beri Nilai Kami</h3>
+                    <div class="space-y-4">
+                        <input type="text" id="rev-nama" placeholder="Nama Anda" class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-primary text-sm font-bold text-slate-600">
+                        <div class="flex flex-col items-center bg-slate-50 rounded-2xl p-4">
+                            <span class="text-[10px] font-bold uppercase text-slate-400 mb-1">Rating Trip</span>
+                            <div class="star-rating">
+                                <input type="radio" name="stars" id="star5" value="5"><label for="star5">★</label>
+                                <input type="radio" name="stars" id="star4" value="4"><label for="star4">★</label>
+                                <input type="radio" name="stars" id="star3" value="3"><label for="star3">★</label>
+                                <input type="radio" name="stars" id="star2" value="2"><label for="star2">★</label>
+                                <input type="radio" name="stars" id="star1" value="1"><label for="star1">★</label>
+                            </div>
+                        </div>
+                        <textarea id="rev-pesan" placeholder="Ceritakan keseruan trip kamu..." class="w-full h-32 px-5 py-4 rounded-2xl bg-slate-50 border-none outline-none focus:ring-2 focus:ring-primary text-sm resize-none"></textarea>
+                        <button onclick="submitReviewToGSheet()" id="btn-submit-review" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-primary transition-all">Kirim Ulasan</button>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    <div id="rating-summary" class="hidden mb-10 bg-white p-8 rounded-[3rem] border border-orange-100 shadow-sm flex flex-col md:flex-row items-center gap-8">
+                        <div class="flex flex-col items-center justify-center bg-orange-50 w-32 h-32 rounded-full border-4 border-white shadow-lg">
+                            <span id="avg-score" class="text-5xl font-bold text-primary">0.0</span>
+                            <span class="text-[10px] font-bold text-orange-300">DARI 5.0</span>
+                        </div>
+                        <div class="flex-1 text-center md:text-left">
+                            <h4 class="text-2xl font-bold text-slate-800 mb-1 uppercase tracking-tighter">Nilai Kepuasan GO!TRAVEL</h4>
+                            <div id="stars-summary" class="flex justify-center md:justify-start text-yellow-400 text-2xl mb-2"></div>
+                            <p class="text-sm text-slate-400 font-medium italic">Berdasarkan <span id="total-reviews" class="text-slate-900 font-bold">0</span> ulasan pengunjung.</p>
+                        </div>
+                    </div>
+                    <div id="review-container" class="grid md:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto no-scrollbar pb-10">
+                        <p class="text-slate-400 italic">Memuat ulasan...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-slate-950 text-white pt-24 pb-12 px-6 text-left">
+        <div class="max-w-7xl mx-auto grid md:grid-cols-4 gap-12 mb-20">
+            <div class="col-span-2">
+                <h3 class="text-2xl font-bold mb-6 uppercase tracking-tighter">GO!<span class="text-primary">TRAVEL</span></h3>
+                <p class="text-slate-400 max-w-sm mb-8 leading-relaxed">Agen perjalanan terpercaya untuk pengalaman eksplorasi alam Indonesia yang tak terlupakan.</p>
+                <div class="flex gap-4">
+                    <a href="#" class="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center hover:bg-primary transition"><i data-lucide="instagram"></i></a>
+                    <a href="#" class="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center hover:bg-primary transition"><i data-lucide="facebook"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-8 text-primary italic">Navigasi</h4>
+                <ul class="space-y-4 text-slate-400">
+                    <li><a href="index.html" class="hover:text-white transition">Beranda</a></li>
+                    <li><a href="katalog.html" class="hover:text-white transition">Paket Tour</a></li>
+                    <li><a href="admin.html" class="hover:text-white transition font-bold underline">Admin</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-8 text-primary italic">Kontak</h4>
+                <ul class="space-y-4 text-slate-400 text-sm">
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="phone" class="w-4 h-4 text-primary"></i> 
+                        <a href="https://wa.me/6281234567890" target="_blank" class="hover:text-white transition">+62 812 3456 7890</a>
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <i data-lucide="mail" class="w-4 h-4 text-primary"></i> 
+                        <a href="mailto:hello@gotravel.id" class="hover:text-white transition">hello@gotravel.id</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto pt-10 border-t border-slate-900 text-center">
+            <p class="text-slate-600 text-[10px] font-bold uppercase tracking-[0.3em]">© 2024 GO!TRAVEL Indonesia</p>
+        </div>
+    </footer>
+
+    <div id="cart-overlay" onclick="toggleCart()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] hidden"></div>
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full max-md:max-w-full max-w-md bg-white z-[70] shadow-2xl p-8 flex flex-col">
+        <div class="flex justify-between items-center mb-8 border-b pb-4">
+            <h2 class="text-2xl font-bold uppercase tracking-tighter">Tas Wisata</h2>
+            <button onclick="toggleCart()" class="p-2 hover:bg-slate-100 rounded-xl transition"><i data-lucide="x"></i></button>
+        </div>
+        <div id="cart-items-list" class="flex-1 overflow-y-auto space-y-4 no-scrollbar"></div>
+        <div class="pt-8 border-t">
+            <div class="flex justify-between mb-8 font-bold text-xl uppercase tracking-tighter">
+                <span>Total</span>
+                <span id="cart-total-price" class="text-primary">Rp 0</span>
+            </div>
+            <a href="katalog.html" class="w-full block text-center bg-slate-950 text-white py-5 rounded-[2rem] font-bold hover:bg-primary transition shadow-xl">Checkout Sekarang</a>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfBQUIIfKjIbRQLSyH8zKIA9hhIEvf85GKTgtPcGttz_bnzEMpgUcxd4ej1LVQGLOyPQ/exec";
+
+        async function init() {
+            initHeroAnim();
+            updateCartUI();
+            try {
+                const res = await fetch(SCRIPT_URL + "?action=sync");
+                const data = await res.json();
+                renderBestSellers(data.produk);
+                renderReviews(data.ulasan); 
+            } catch (e) { console.error("Gagal memuat data"); }
+            lucide.createIcons();
+        }
+
+        // PERBAIKAN ANIMASI HERO
+        function initHeroAnim() {
+            const h1 = document.getElementById('bouncing-text');
+            const lines = h1.querySelectorAll('div');
+            
+            lines.forEach((line) => {
+                const text = line.innerText;
+                // Pecah teks per karakter tapi tetap dalam container barisnya
+                line.innerHTML = text.split('').map(char => 
+                    `<span class="char">${char === ' ' ? '\u00A0' : char}</span>`
+                ).join('');
+            });
+
+            setTimeout(() => {
+                const spans = h1.querySelectorAll('.char');
+                spans.forEach((s, i) => {
+                    setTimeout(() => {
+                        s.classList.add('push-effect', 'active-char');
+                        setTimeout(() => s.classList.remove('push-effect'), 500);
+                    }, i * 60);
+                });
+            }, 800);
+        }
+
+        function renderBestSellers(products) {
+            const container = document.getElementById('best-seller-grid');
+            if(!products) return;
+            const best = products.filter(p => {
+                const val = String(p.bestseller || p.best_seller || "").toLowerCase();
+                return val === 'yes' || val === 'ya';
+            });
+
+            if(best.length === 0) {
+                container.innerHTML = "<p class='col-span-full text-center text-slate-400'>Belum ada paket populer.</p>";
+                return;
+            }
+            container.innerHTML = best.slice(0, 3).map(p => `
+                <div class="bg-white rounded-[2.5rem] overflow-hidden shadow-sm hover:shadow-xl transition-all border border-slate-100 p-4 group">
+                    <img src="${p.foto ? p.foto.split(',')[0] : 'https://placehold.co/600x400'}" class="w-full h-56 object-cover rounded-[2rem] mb-6">
+                    <h3 class="text-xl font-bold mb-4 px-2 truncate">${p.judul}</h3>
+                    <div class="flex justify-between items-center px-2 pt-4 border-t border-slate-50">
+                        <span class="text-primary font-bold">Rp ${parseInt(p.harga).toLocaleString('id-ID')}</span>
+                        <a href="katalog.html" class="p-4 bg-slate-900 text-white rounded-2xl hover:bg-primary transition"><i data-lucide="arrow-right"></i></a>
+                    </div>
+                </div>`).join('');
+            lucide.createIcons();
+        }
+
+        function renderReviews(reviews) {
+            const container = document.getElementById('review-container');
+            const summaryBox = document.getElementById('rating-summary');
+            if(!reviews || reviews.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center text-slate-400 py-10">Belum ada ulasan.</p>`;
+                return;
+            }
+            summaryBox.classList.remove('hidden');
+            const totalScore = reviews.reduce((sum, r) => sum + (parseFloat(r.bintang) || 0), 0);
+            const avgRating = (totalScore / reviews.length).toFixed(1); 
+            document.getElementById('avg-score').innerText = avgRating;
+            document.getElementById('total-reviews').innerText = reviews.length;
+            let starHtml = "";
+            for(let i=1; i<=5; i++) starHtml += i <= Math.round(avgRating) ? "★" : "☆";
+            document.getElementById('stars-summary').innerText = starHtml;
+
+            container.innerHTML = reviews.slice().reverse().map(r => `
+                <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm text-left">
+                    <div class="text-yellow-400 text-xs mb-3">
+                        ${"★".repeat(parseInt(r.bintang || 0))}${"☆".repeat(5 - parseInt(r.bintang || 0))}
+                    </div>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-4 italic">"${r.pesan}"</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
+                            ${r.nama ? r.nama.charAt(0).toUpperCase() : 'U'}
+                        </div>
+                        <p class="text-[10px] font-bold uppercase text-slate-700">${r.nama}</p>
+                    </div>
+                </div>`).join('');
+        }
+
+        async function submitReviewToGSheet() {
+            const nama = document.getElementById('rev-nama').value;
+            const pesan = document.getElementById('rev-pesan').value;
+            const starInput = document.querySelector('input[name="stars"]:checked');
+            if(!nama || !pesan || !starInput) return Swal.fire('Error', 'Lengkapi data!', 'error');
+            const btn = document.getElementById('btn-submit-review');
+            btn.innerText = "Mengirim..."; btn.disabled = true;
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'addReview', nama, bintang: starInput.value, pesan })
+                });
+                Swal.fire('Berhasil!', 'Ulasan dikirim.', 'success').then(() => location.reload());
+            } catch(e) { 
+                Swal.fire('Error', 'Gagal kirim.', 'error');
+                btn.innerText = "Kirim Ulasan"; btn.disabled = false;
+            }
+        }
+
+        function toggleCart() {
+            document.getElementById('cart-sidebar').classList.toggle('open');
+            document.getElementById('cart-overlay').classList.toggle('hidden');
+        }
+
+        function updateCartUI() {
+            const cart = JSON.parse(localStorage.getItem('travel_cart')) || [];
+            document.getElementById('cart-count').innerText = cart.length;
+            const container = document.getElementById('cart-items-list');
+            let total = 0;
+            if(cart.length === 0) {
+                container.innerHTML = `<p class="text-center py-20 text-slate-400">Tas Kosong.</p>`;
+                document.getElementById('cart-total-price').innerText = "Rp 0";
+                return;
+            }
+            container.innerHTML = cart.map((item, idx) => {
+                total += parseInt(item.harga);
+                return `<div class="flex gap-4 items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <img src="${item.foto}" class="w-10 h-10 object-cover rounded-lg">
+                    <div class="flex-1 text-left">
+                        <p class="text-[10px] font-bold truncate uppercase">${item.nama}</p>
+                        <p class="text-primary font-bold text-xs">Rp ${parseInt(item.harga).toLocaleString('id-ID')}</p>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById('cart-total-price').innerText = "Rp " + total.toLocaleString('id-ID');
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

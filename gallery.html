@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery Momen - GoTravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root { --primary: #FF5733; --text-dark: #2D3436; }
+        body { font-family: 'Fredoka', sans-serif; color: var(--text-dark); background-color: #f8fafc; }
+        .bg-primary { background-color: var(--primary); }
+        .text-primary { color: var(--primary); }
+        
+        .filter-btn.active { 
+            background-color: var(--primary); 
+            color: white; 
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(255, 87, 51, 0.3);
+        }
+        
+        .gallery-item { break-inside: avoid; margin-bottom: 1.5rem; transition: all 0.4s ease; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Loading Animation */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="pb-20">
+
+    <nav class="fixed w-full z-40 px-6 py-4">
+        <div class="max-w-7xl mx-auto bg-white/90 backdrop-blur-md rounded-full px-8 py-3 flex justify-between items-center shadow-md border border-white/50">
+            <a href="index.html" class="flex items-center gap-2 font-bold text-xl uppercase tracking-tighter">
+                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"><i data-lucide="palmtree" class="w-5 h-5"></i></div>
+                <span>GO!<span class="text-primary">TRAVEL</span></span>
+            </a>
+            <div class="flex gap-6 font-semibold text-slate-500 text-sm">
+                <a href="index.html" class="hover:text-primary transition-colors">Beranda</a>
+                <a href="katalog.html" class="hover:text-primary transition-colors">Katalog</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="pt-32 pb-10 px-6 max-w-7xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Gallery <span class="text-primary">Petualangan</span></h1>
+        <p class="text-slate-500 text-sm md:text-base">Melihat kembali momen-momen indah perjalanan para traveler kami.</p>
+    </section>
+
+    <section class="px-6 max-w-7xl mx-auto mb-12">
+        <div class="space-y-4">
+            <div class="flex flex-col gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Berdasarkan Kategori</span>
+                <div id="cat-filters" class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    <div class="loader m-auto"></div>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-2">Berdasarkan Destinasi</span>
+                <div id="prod-filters" class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
+                    </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="px-6 max-w-7xl mx-auto">
+        <div id="gallery-grid" class="columns-1 md:columns-2 lg:columns-3 gap-6">
+            </div>
+    </section>
+
+    <script>
+        // MASUKKAN URL SCRIPT ANDA DI SINI
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfBQUIIfKjIbRQLSyH8zKIA9hhIEvf85GKTgtPcGttz_bnzEMpgUcxd4ej1LVQGLOyPQ/exec"; 
+
+        let galleryData = [];
+        let currentCat = 'Semua';
+        let currentProd = 'Semua';
+
+        async function initGallery() {
+            try {
+                const res = await fetch(SCRIPT_URL + "?action=getGallery");
+                galleryData = await res.json();
+                
+                renderFilterButtons();
+                applyFilters();
+            } catch (e) {
+                console.error("Gagal memuat:", e);
+                document.getElementById('gallery-grid').innerHTML = "<p class='text-center text-slate-400'>Gagal memuat data galeri.</p>";
+            }
+        }
+
+        function renderFilterButtons() {
+            // Filter Kategori
+            const cats = ['Semua', ...new Set(galleryData.map(item => item.kategori).filter(Boolean))];
+            document.getElementById('cat-filters').innerHTML = cats.map(c => `
+                <button onclick="setFilter('cat', '${c}')" class="filter-btn-cat whitespace-nowrap px-6 py-2 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all ${c === 'Semua' ? 'active' : ''}">${c}</button>
+            `).join('');
+
+            // Filter Nama Produk
+            const prods = ['Semua', ...new Set(galleryData.map(item => item.produk).filter(Boolean))];
+            document.getElementById('prod-filters').innerHTML = prods.map(p => `
+                <button onclick="setFilter('prod', '${p}')" class="filter-btn-prod whitespace-nowrap px-6 py-2 rounded-full border border-slate-200 bg-white text-xs font-bold text-slate-500 transition-all ${p === 'Semua' ? 'active' : ''}">${p}</button>
+            `).join('');
+
+            updateButtonStates();
+        }
+
+        function setFilter(type, value) {
+            if (type === 'cat') currentCat = value;
+            if (type === 'prod') currentProd = value;
+            
+            updateButtonStates();
+            applyFilters();
+        }
+
+        function updateButtonStates() {
+            // Update warna tombol kategori
+            document.querySelectorAll('.filter-btn-cat').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === currentCat);
+            });
+            // Update warna tombol produk
+            document.querySelectorAll('.filter-btn-prod').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === currentProd);
+            });
+        }
+
+        function applyFilters() {
+            let filtered = galleryData;
+
+            if (currentCat !== 'Semua') {
+                filtered = filtered.filter(item => item.kategori === currentCat);
+            }
+            if (currentProd !== 'Semua') {
+                filtered = filtered.filter(item => item.produk === currentProd);
+            }
+
+            renderGallery(filtered);
+        }
+
+        function renderGallery(data) {
+            const grid = document.getElementById('gallery-grid');
+            if (data.length === 0) {
+                grid.innerHTML = "<p class='text-center text-slate-400 col-span-full py-10'>Tidak ada foto untuk kategori ini.</p>";
+                return;
+            }
+
+            grid.innerHTML = data.map(item => `
+                <div class="gallery-item group relative overflow-hidden rounded-[2rem] bg-white border border-slate-100 shadow-sm">
+                    <img src="${item.foto}" class="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6">
+                        <span class="text-primary font-bold text-[10px] uppercase tracking-widest mb-1">${item.kategori}</span>
+                        <h3 class="text-white font-bold text-lg">${item.produk || 'Wisata'}</h3>
+                        <p class="text-white/60 text-xs mt-1"><i data-lucide="calendar" class="w-3 h-3 inline mr-1"></i> ${item.waktu || ''}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        window.onload = initGallery;
+    </script>
+</body>
+</html>

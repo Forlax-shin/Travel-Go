@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog & Berita - GoTravel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Fredoka', sans-serif; background-color: #f8fafc; }
+        .text-primary { color: #f97316; }
+        .bg-primary { background-color: #f97316; }
+        .filter-btn.active { background: #f97316; color: white; border-color: #f97316; }
+        .custom-scroll::-webkit-scrollbar { height: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="p-6">
+        <div class="max-w-7xl mx-auto bg-white rounded-full px-8 py-3 flex justify-between items-center shadow-md border border-slate-100">
+            <a href="index.html" class="font-bold text-xl uppercase tracking-tighter">GO!<span class="text-primary">TRAVEL</span></a>
+            <div class="flex gap-6 text-sm font-semibold">
+                <a href="index.html" class="hover:text-primary transition">Beranda</a>
+                <a href="blog.html" class="text-primary font-bold underline decoration-2 underline-offset-8">Berita</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="py-16 text-center px-6">
+        <h1 class="text-5xl font-bold tracking-tighter text-slate-800 mb-4">Update <span class="text-primary italic">Perjalanan</span></h1>
+        <p class="text-slate-500 max-w-xl mx-auto">Temukan tips liburan, info destinasi terbaru, dan cerita seru dari tim GoTravel setiap minggunya.</p>
+    </header>
+
+    <div id="blog-list-view" class="max-w-7xl mx-auto px-6 pb-20">
+        
+        <div id="filter-container" class="flex gap-3 mb-12 overflow-x-auto pb-4 custom-scroll justify-center">
+            <button onclick="filterBlog('Semua')" class="filter-btn active px-6 py-2.5 rounded-full border border-slate-200 font-bold text-sm transition whitespace-nowrap">Semua</button>
+            </div>
+
+        <div id="blog-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            <div class="col-span-full py-20 text-center animate-pulse text-slate-400">Sedang memuat berita terbaru...</div>
+        </div>
+    </div>
+
+    <div id="blog-detail-view" class="hidden max-w-4xl mx-auto px-6 pb-20">
+        <button onclick="showList()" class="flex items-center gap-2 text-slate-500 font-bold mb-10 hover:text-primary transition group">
+            <div class="p-2 bg-white rounded-full shadow-sm group-hover:bg-primary group-hover:text-white transition">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </div>
+            Kembali ke Daftar
+        </button>
+        
+        <div id="blog-content">
+            </div>
+    </div>
+
+    <script>
+        // MASUKKAN URL SCRIPT GSHEET ANDA DI SINI
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfBQUIIfKjIbRQLSyH8zKIA9hhIEvf85GKTgtPcGttz_bnzEMpgUcxd4ej1LVQGLOyPQ/exec";
+        
+        let allPosts = [];
+
+        async function loadBlogs() {
+            try {
+                const res = await fetch(SCRIPT_URL + "?action=sync");
+                const data = await res.json();
+                
+                // Urutkan berita dari yang terbaru (asumsi baris bawah di GSheet adalah terbaru)
+                allPosts = (data.berita || []).reverse();
+                
+                renderCategories(allPosts);
+                renderGrid(allPosts);
+            } catch (e) {
+                console.error("Error loading blogs:", e);
+                document.getElementById('blog-grid').innerHTML = '<p class="col-span-full text-center text-red-400 font-bold">Gagal memuat berita. Silakan refresh halaman.</p>';
+            }
+        }
+
+        // Membuat tombol kategori secara otomatis berdasarkan data yang ada
+        function renderCategories(posts) {
+            const container = document.getElementById('filter-container');
+            const categories = [...new Set(posts.map(p => p.kategori))]; // Ambil unik kategori
+            
+            // Tambahkan tombol kategori ke container (selain tombol "Semua")
+            categories.forEach(kat => {
+                if(!kat) return;
+                const btn = document.createElement('button');
+                btn.className = "filter-btn px-6 py-2.5 rounded-full border border-slate-200 font-bold text-sm transition whitespace-nowrap";
+                btn.innerText = kat;
+                btn.onclick = () => filterBlog(kat);
+                container.appendChild(btn);
+            });
+        }
+
+        function renderGrid(posts) {
+            const grid = document.getElementById('blog-grid');
+            
+            if(posts.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10 italic border-2 border-dashed border-slate-100 rounded-[2rem]">Belum ada berita yang diterbitkan.</p>';
+                return;
+            }
+
+            grid.innerHTML = posts.map((p, idx) => {
+                // Penanganan Multiple Photo: Ambil foto pertama saja
+                const photoLink = p.foto ? p.foto.split(',')[0].trim() : 'https://via.placeholder.com/600x400?text=No+Image';
+                
+                return `
+                <div onclick="showDetail(${idx})" class="group cursor-pointer">
+                    <div class="relative overflow-hidden rounded-[2.5rem] mb-6 aspect-[4/3] shadow-lg shadow-slate-200/50">
+                        <img src="${photoLink}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                        <span class="absolute top-5 left-5 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-[10px] font-bold text-primary uppercase shadow-sm">${p.kategori}</span>
+                    </div>
+                    <div class="px-2">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">${p.tanggal || 'Baru Saja'}</p>
+                        <h3 class="text-xl font-bold leading-tight group-hover:text-primary transition line-clamp-2">${p.judul}</h3>
+                        <p class="text-sm text-slate-500 mt-3 line-clamp-2">${p.isi}</p>
+                    </div>
+                </div>
+            `}).join('');
+            
+            lucide.createIcons();
+        }
+
+        function filterBlog(kat) {
+            // Update UI tombol aktif
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.innerText === kat);
+            });
+
+            // Filter data
+            const filtered = kat === 'Semua' ? allPosts : allPosts.filter(p => p.kategori === kat);
+            renderGrid(filtered);
+        }
+
+        function showDetail(idx) {
+            // Karena allPosts sudah direverse di awal, kita gunakan data ini langsung
+            const p = allPosts[idx];
+            if(!p) return;
+
+            const content = document.getElementById('blog-content');
+            const mainPhoto = p.foto ? p.foto.split(',')[0].trim() : '';
+
+            content.innerHTML = `
+                <div class="text-center mb-10">
+                    <span class="bg-orange-100 text-primary px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest">${p.kategori}</span>
+                    <h1 class="text-3xl md:text-5xl font-bold mt-8 mb-6 leading-tight text-slate-800">${p.judul}</h1>
+                    <div class="flex items-center justify-center gap-3 text-slate-400 text-sm">
+                        <i data-lucide="user" class="w-4 h-4"></i> ${p.penulis || 'Admin GoTravel'}
+                        <span class="text-slate-200">|</span>
+                        <i data-lucide="calendar" class="w-4 h-4"></i> ${p.tanggal || '-'}
+                    </div>
+                </div>
+                
+                ${mainPhoto ? `<img src="${mainPhoto}" class="w-full h-[300px] md:h-[500px] object-cover rounded-[3rem] shadow-2xl mb-12 border-8 border-white">` : ''}
+                
+                <div class="prose prose-orange max-w-none text-lg text-slate-700 leading-relaxed whitespace-pre-line px-2 md:px-10 text-justify">
+                    ${p.isi}
+                </div>
+            `;
+
+            document.getElementById('blog-list-view').classList.add('hidden');
+            document.getElementById('blog-detail-view').classList.remove('hidden');
+            window.scrollTo(0, 0);
+            lucide.createIcons();
+        }
+
+        function showList() {
+            document.getElementById('blog-list-view').classList.remove('hidden');
+            document.getElementById('blog-detail-view').classList.add('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        window.onload = loadBlogs;
+    </script>
+</body>
+</html>
